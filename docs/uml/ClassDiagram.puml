@@ -1,0 +1,94 @@
+﻿@startuml
+title IntegrationHub - Domain Class Diagram (Core)
+
+class SystemEndpoint {
+  +Guid Id
+  +string Name
+  +string BaseUrl
+  +string? ApiKey
+  +bool IsActive
+}
+
+class Integration {
+  +Guid Id
+  +string Name
+  +Guid SourceEndpointId
+  +Guid TargetEndpointId
+  +bool IsActive
+}
+
+class IntegrationRun {
+  +Guid Id
+  +Guid IntegrationId
+  +DateTimeOffset StartedAt
+  +DateTimeOffset? FinishedAt
+  +RunStatus Status
+  +string? ErrorMessage
+}
+
+class IntegrationLog {
+  +Guid Id
+  +Guid IntegrationRunId
+  +DateTimeOffset Timestamp
+  +LogLevel Level
+  +string Message
+}
+
+enum RunStatus {
+  Pending
+  Success
+  Failed
+}
+
+enum LogLevel {
+  Info
+  Warning
+  Error
+}
+
+SystemEndpoint "1" <-- "0..*" Integration : source
+SystemEndpoint "1" <-- "0..*" Integration : target
+
+Integration "1" <-- "0..*" IntegrationRun
+IntegrationRun "1" <-- "0..*" IntegrationLog
+
+class MappingRule {
+  +Guid Id
+  +Guid IntegrationId
+  +string SourceField
+  +string TargetField
+  +TransformType Transform
+}
+
+enum TransformType {
+  None
+  Uppercase
+  Trim
+  DateFormat
+}
+
+Integration "1" <-- "0..*" MappingRule
+
+class SupportTicket {
+  +Guid Id
+  +string Title
+  +string Description
+  +TicketStatus Status
+  +DateTimeOffset CreatedAt
+}
+
+enum TicketStatus {
+  Open
+  InProgress
+  Resolved
+  Closed
+}
+
+class KnowledgeBaseArticle {
+  +Guid Id
+  +string Title
+  +string Content
+  +DateTimeOffset UpdatedAt
+}
+
+@enduml
