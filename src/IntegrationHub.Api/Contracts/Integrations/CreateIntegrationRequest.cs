@@ -4,5 +4,5 @@ public sealed record CreateIntegrationRequest(
     string Name,
     Guid SourceEndpointId,
     Guid TargetEndpointId,
-    bool IsActive
+    bool IsActive = true
     );

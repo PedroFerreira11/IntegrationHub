@@ -4,7 +4,7 @@ using IntegrationHub.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace IntegrationHub.Api.Controller;
+namespace IntegrationHub.Api.Controllers;
 
 
 [ApiController]
