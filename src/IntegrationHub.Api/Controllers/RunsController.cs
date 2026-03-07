@@ -20,24 +20,6 @@ public class RunsController : ControllerBase
         _db = db;
     }
 
-    // [HttpPost]
-    // public async Task<ActionResult> Run(Guid integrationId, CancellationToken ct)
-    // {
-    //     try
-    //     {
-    //         var result = await _runner.RunAsync(integrationId, ct);
-    //         return Ok(new { runId = result.IntegrationId, status = result.Status });
-    //     }
-    //     catch (InvalidOperationException ex)
-    //     {
-    //         return BadRequest(new { error = ex.Message });
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return StatusCode(500, new { error = ex.Message });
-    //     }
-    // }
-
     [HttpPost]
     public async Task<ActionResult> CreateRun(Guid integrationId, CancellationToken ct)
     {
@@ -52,16 +34,21 @@ public class RunsController : ControllerBase
             IntegrationId = integrationId,
             Status = RunStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow,
+            RetryCount = 0,
+            MaxRetries = 3
         };
         
         _db.IntegrationRuns.Add(run);
         await _db.SaveChangesAsync(ct);
+        
         return Accepted(new
         {
             run.Id,
             run.IntegrationId,
             Status = run.Status.ToString(),
             run.CreatedAt,
+            run.RetryCount,
+            run.MaxRetries
         });
     }
 
@@ -78,10 +65,14 @@ public class RunsController : ControllerBase
         {
             run.Id,
             run.IntegrationId,
+            run.CreatedAt,
             run.StartedAt,
             run.FinishedAt,
             Status = run.Status.ToString(),
-            run.ErrorMessage
+            run.ErrorMessage,
+            run.RetryCount,
+            run.MaxRetries,
+            run.NextRetryAt
         });
     }
 

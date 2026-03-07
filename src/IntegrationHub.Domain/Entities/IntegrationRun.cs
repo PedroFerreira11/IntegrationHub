@@ -12,10 +12,15 @@ public class IntegrationRun
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? StartedAt { get; set; }
     public DateTimeOffset? FinishedAt { get; set; }
-
+    
     public RunStatus Status { get; set; } = RunStatus.Pending;
 
     public string? ErrorMessage { get; set; }
+    
+    public int RetryCount { get; set; }
+    public int MaxRetries { get; set; } = 3;
+    public DateTimeOffset? NextRetryAt { get; set; }
+    
 
     public List<IntegrationLog> Logs { get; set; } = new();
 }

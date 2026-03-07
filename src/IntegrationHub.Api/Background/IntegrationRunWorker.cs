@@ -45,22 +45,52 @@ public class IntegrationRunWorker : BackgroundService
                 run.ErrorMessage = null;
 
                 await db.SaveChangesAsync(ct);
+                
                 try
                 {
                     await runner.RunAsync(run.Id, ct);
+                    
                     run.Status = RunStatus.Success;
                     run.ErrorMessage = null;
+                    run.NextRetryAt = null;
+                    
+                    await db.SaveChangesAsync(ct);
                 }
                 catch (Exception ex)
                 {
-                    run.Status = RunStatus.Failed;
-                    run.FinishedAt = DateTime.Now;
-                    run.ErrorMessage = ex.Message;
+                    run.RetryCount++;
 
-                    _logger.LogError(ex, ex.Message);
+                    if (run.RetryCount < run.MaxRetries)
+                    {
+                        var delay = GetRetryDelay(run.RetryCount); 
+                        
+                        run.Status = RunStatus.Pending;
+                        run.NextRetryAt = DateTimeOffset.UtcNow.Add(delay);
+                        run.ErrorMessage = ex.Message;
+                        run.FinishedAt = null;
+                        
+                        _logger.LogWarning(
+                            ex,
+                            "Run {RunId} failed on attempt {Attempt}. Retrying at {NextRetryAt}",
+                            run.Id,
+                            run.RetryCount,
+                            run.NextRetryAt);
+                    }
+                    else
+                    {
+                        run.Status = RunStatus.Failed;
+                        run.FinishedAt = DateTimeOffset.UtcNow;
+                        run.NextRetryAt = null;
+                        run.ErrorMessage = ex.Message;
+                        
+                        _logger.LogError(
+                            ex,
+                            "Run {RunId} failed permanently after {RetryCount} attempts",
+                            run.Id,
+                            run.RetryCount);
+                    }
+                    await db.SaveChangesAsync(ct);
                 }
-
-                await db.SaveChangesAsync(ct);
             }
             catch (Exception ex)
             {
@@ -68,5 +98,16 @@ public class IntegrationRunWorker : BackgroundService
                 await Task.Delay(5000, ct);
             }
         }
+    }
+    
+    private static TimeSpan GetRetryDelay(int retryCount)
+    {
+        return retryCount switch
+        {
+            1 => TimeSpan.FromSeconds(10),
+            2 => TimeSpan.FromSeconds(30),
+            3 => TimeSpan.FromMinutes(1),
+            _ => TimeSpan.FromMinutes(2)
+        };
     }
 }
