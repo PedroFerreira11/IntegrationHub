@@ -1,3 +1,4 @@
+using IntegrationHub.Infrastructure.Logging;
 using IntegrationHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,8 @@ builder.Services.AddDbContext<IntegrationHubDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpClient();
+
+builder.Services.AddScoped<RunLogService>();
 
 var app = builder.Build();
 

@@ -1,10 +1,11 @@
 ﻿using IntegrationHub.Api.Contracts.Runs;
+using IntegrationHub.Application.Logging;
 using IntegrationHub.Domain.Entities;
 using IntegrationHub.Domain.Enums;
+using IntegrationHub.Infrastructure.Logging;
 using IntegrationHub.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using LogLevel = IntegrationHub.Domain.Enums.LogLevel;
 
 namespace IntegrationHub.Api.Controllers;
 
@@ -14,11 +15,13 @@ public class RunsController : ControllerBase
 {
     private readonly IntegrationHubDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly RunLogService _logService;
     
-    public RunsController(IntegrationHubDbContext db, IHttpClientFactory httpClientFactory)
+    public RunsController(IntegrationHubDbContext db, IHttpClientFactory httpClientFactory,  RunLogService logService)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
+        _logService = logService;
     }
 
     [HttpPost]
@@ -40,56 +43,50 @@ public class RunsController : ControllerBase
             Status = RunStatus.Pending,
             StartedAt = DateTimeOffset.UtcNow,
         };
+
         
         _db.IntegrationRuns.Add(run);
         await _db.SaveChangesAsync(ct);
         
-        async Task AddLog(LogLevel level, string message)
-        {
-            _db.IntegrationLogs.Add(new IntegrationLog
-            {
-                IntegrationRunId = run.Id,
-                Timestamp = DateTimeOffset.UtcNow,
-                Level = level,
-                Message = message
-            });
-
-            await _db.SaveChangesAsync(ct);
-        }
-
+        var http = _httpClientFactory.CreateClient("integration-client");
+        
+        var buffer = new RunLogBuffer(run.Id);
+        
         try
         {
-            await AddLog(LogLevel.Info, "Run Started");
-            
-            var http = _httpClientFactory.CreateClient();
+            buffer.Info("Run Started");
 
             var sourceUrl = $"{integration.SourceEndpoint.BaseUrl.TrimEnd('/')}/api/orders";
-            await AddLog(LogLevel.Info, $"Fetching orders from: {sourceUrl} ");
+            
+            buffer.Info($"Fetching orders from: {sourceUrl} ");
             
             var orders = await http.GetFromJsonAsync<List<OrderDto>>(sourceUrl, ct);
             orders??= new List<OrderDto>();
             
-            await AddLog(LogLevel.Info, $"Fetched {orders.Count} orders ");
+            buffer.Info($"Fetched {orders.Count} orders ");
             
             var targetUrl = $"{integration.TargetEndpoint.BaseUrl.TrimEnd('/')}/api/orders";
-            await AddLog(LogLevel.Info, $"Sending orders to: {targetUrl} ");
+
+            buffer.Info($"Sending orders to: {targetUrl} ");
             
             var response = await http.PostAsJsonAsync(targetUrl, orders,ct);
             var responseBody = await response.Content.ReadAsStringAsync(ct);
 
             if (!response.IsSuccessStatusCode)
             {
-                await AddLog(LogLevel.Error, $"Failed to send orders to: {targetUrl} ");
-                throw new InvalidOperationException("Failed to send orders to: " + targetUrl); 
+                buffer.Error($"Target returned {(int)response.StatusCode}: {responseBody}");
+                throw new InvalidOperationException($"Target returned {(int)response.StatusCode}"); 
             }
             
-            await AddLog(LogLevel.Info, $"Successfully Sent orders to: {targetUrl} ");
+            buffer.Info($"Target OK: {responseBody}");
             
             run.Status = RunStatus.Success;
             run.FinishedAt = DateTimeOffset.UtcNow;
             
-            await AddLog(LogLevel.Info, "Run Finished successfully");
+            buffer.Info("Run Finished successfully");
             await _db.SaveChangesAsync(ct);
+            
+            await _logService.AppendAsync(buffer.Logs, ct);
             
             return CreatedAtAction(nameof(GetRun), new { runId = run.Id }, new { runId = run.Id, status = run.Status.ToString() });
         } catch  (Exception ex)
@@ -99,7 +96,9 @@ public class RunsController : ControllerBase
             run.ErrorMessage = ex.Message;
             
             await _db.SaveChangesAsync(ct);
-            await AddLog(LogLevel.Error, $"Run failed: {ex.Message}");
+            
+            buffer.Error($"Run failed: {ex.Message}");
+            await _logService.AppendAsync(buffer.Logs, ct);
             
             return StatusCode(500, new { runId = run.Id, error = ex.Message });
         }
@@ -125,7 +124,7 @@ public class RunsController : ControllerBase
         });
     }
 
-    [HttpGet("api/runs/{runId:guid}/logs")]
+    [HttpGet("/api/runs/{runId:guid}/logs")]
     public async Task<ActionResult> GetLogs(Guid runId, CancellationToken ct)
     {
         var logs = await _db.IntegrationLogs
