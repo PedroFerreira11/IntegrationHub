@@ -1,6 +1,9 @@
+using IntegrationHub.Application.Runs;
 using IntegrationHub.Infrastructure.Logging;
 using IntegrationHub.Infrastructure.Persistence;
+using IntegrationHub.Infrastructure.Runs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http.Resilience;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,9 +15,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<IntegrationHubDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("integration-client").AddStandardResilienceHandler();
 
 builder.Services.AddScoped<RunLogService>();
+builder.Services.AddScoped<IIntegrationRunner, IntegrationRunner>();
+
 
 var app = builder.Build();
 
