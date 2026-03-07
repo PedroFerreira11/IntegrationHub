@@ -9,7 +9,8 @@ public class IntegrationRun
     public Guid IntegrationId { get; set; }
     public Integration Integration { get; set; } = null!;
 
-    public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? StartedAt { get; set; }
     public DateTimeOffset? FinishedAt { get; set; }
 
     public RunStatus Status { get; set; } = RunStatus.Pending;

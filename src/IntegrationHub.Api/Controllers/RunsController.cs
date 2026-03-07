@@ -1,4 +1,6 @@
 ﻿using IntegrationHub.Application.Runs;
+using IntegrationHub.Domain.Entities;
+using IntegrationHub.Domain.Enums;
 using IntegrationHub.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,22 +20,49 @@ public class RunsController : ControllerBase
         _db = db;
     }
 
+    // [HttpPost]
+    // public async Task<ActionResult> Run(Guid integrationId, CancellationToken ct)
+    // {
+    //     try
+    //     {
+    //         var result = await _runner.RunAsync(integrationId, ct);
+    //         return Ok(new { runId = result.IntegrationId, status = result.Status });
+    //     }
+    //     catch (InvalidOperationException ex)
+    //     {
+    //         return BadRequest(new { error = ex.Message });
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return StatusCode(500, new { error = ex.Message });
+    //     }
+    // }
+
     [HttpPost]
-    public async Task<ActionResult> Run(Guid integrationId, CancellationToken ct)
+    public async Task<ActionResult> CreateRun(Guid integrationId, CancellationToken ct)
     {
-        try
+        var integrationExists = await _db.Integrations
+            .AnyAsync(i => i.Id == integrationId, ct);
+
+        if (!integrationExists)
+            return NotFound(new { error = "Integration not found." });
+
+        var run = new IntegrationRun
         {
-            var result = await _runner.RunAsync(integrationId, ct);
-            return Ok(new { runId = result.IntegrationId, status = result.Status });
-        }
-        catch (InvalidOperationException ex)
+            IntegrationId = integrationId,
+            Status = RunStatus.Pending,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        
+        _db.IntegrationRuns.Add(run);
+        await _db.SaveChangesAsync(ct);
+        return Accepted(new
         {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = ex.Message });
-        }
+            run.Id,
+            run.IntegrationId,
+            Status = run.Status.ToString(),
+            run.CreatedAt,
+        });
     }
 
     [HttpGet("/api/runs/{runId:guid}")]
@@ -59,11 +88,22 @@ public class RunsController : ControllerBase
     [HttpGet("/api/runs/{runId:guid}/logs")]
     public async Task<ActionResult> GetLogs(Guid runId, CancellationToken ct)
     {
+        var runExists = await _db.IntegrationRuns
+            .AnyAsync(r => r.Id == runId, ct);
+
+        if (!runExists)
+            return NotFound(new { error = "Run not found." });
+
         var logs = await _db.IntegrationLogs
             .AsNoTracking()
             .Where(l => l.IntegrationRunId == runId)
             .OrderBy(l => l.Timestamp)
-            .Select(l => new { l.Timestamp, Level = l.Level.ToString(), l.Message })
+            .Select(l => new
+            {
+                l.Timestamp,
+                Level = l.Level.ToString(),
+                l.Message
+            })
             .ToListAsync(ct);
 
         return Ok(logs);

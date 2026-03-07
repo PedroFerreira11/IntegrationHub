@@ -26,41 +26,35 @@ public sealed class IntegrationRunner : IIntegrationRunner
         _logService = logService;
     }
 
-    public async Task<RunResult> RunAsync(Guid integrationId, CancellationToken ct)
+    public async Task RunAsync(Guid runId, CancellationToken ct)
     {
-        var integration = await _db.Integrations
-            .Include(i => i.SourceEndpoint)
-            .Include(i => i.TargetEndpoint)
-            .FirstOrDefaultAsync(i => i.Id == integrationId, ct);
+        var run = await _db.IntegrationRuns
+            .Include(r => r.Integration)
+                .ThenInclude(i => i.SourceEndpoint)
+            .Include(r => r.Integration)
+                .ThenInclude(i => i.TargetEndpoint)
+            .FirstOrDefaultAsync(r => r.Id == runId, ct);
 
-        if (integration is null)
-            throw new InvalidOperationException("Integration not found");
+        if (run is null)
+            throw new InvalidOperationException("Run not found");
+
+        var integration = run.Integration;
 
         if (!integration.IsActive)
             throw new InvalidOperationException("Integration not active");
 
         if (!integration.SourceEndpoint.IsActive)
-            throw new InvalidOperationException("SourceEndpoint not active");
+            throw new InvalidOperationException("Source endpoint not active");
 
         if (!integration.TargetEndpoint.IsActive)
-            throw new InvalidOperationException("TargetEndpoint not active");
-
-        var run = new IntegrationRun
-        {
-            IntegrationId = integration.Id,
-            Status = RunStatus.Pending,
-            StartedAt = DateTimeOffset.UtcNow
-        };
-
-        _db.IntegrationRuns.Add(run);
-        await _db.SaveChangesAsync(ct);
+            throw new InvalidOperationException("Target endpoint not active");
 
         var http = _httpClientFactory.CreateClient("integration-client");
         var buffer = new RunLogBuffer(run.Id);
 
         try
         {
-            buffer.Info("Run Started");
+            buffer.Info("Run started");
 
             var sourceUrl = $"{integration.SourceEndpoint.BaseUrl.TrimEnd('/')}/api/orders";
             buffer.Info($"Fetching orders from: {sourceUrl}");
@@ -83,28 +77,14 @@ public sealed class IntegrationRunner : IIntegrationRunner
             }
 
             buffer.Info($"Target OK: {responseBody}");
+            buffer.Info("Run finished successfully");
 
-            run.Status = RunStatus.Success;
-            run.FinishedAt = DateTimeOffset.UtcNow;
-
-            buffer.Info("Run Finished successfully");
-
-            await _db.SaveChangesAsync(ct);
             await _logService.AppendAsync(buffer.Logs, ct);
-
-            return new RunResult(run.Id, run.Status.ToString());
         }
         catch (Exception ex)
         {
-            run.Status = RunStatus.Failed;
-            run.FinishedAt = DateTimeOffset.UtcNow;
-            run.ErrorMessage = ex.Message;
-
-            await _db.SaveChangesAsync(ct);
-
             buffer.Error($"Run failed: {ex.Message}");
             await _logService.AppendAsync(buffer.Logs, ct);
-
             throw;
         }
     }

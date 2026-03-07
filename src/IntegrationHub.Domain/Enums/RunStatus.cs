@@ -3,6 +3,7 @@
 public enum RunStatus
 {
     Pending = 0,
-    Success = 1,
-    Failed = 2
+    Running = 1,
+    Success = 2,
+    Failed = 3
 }

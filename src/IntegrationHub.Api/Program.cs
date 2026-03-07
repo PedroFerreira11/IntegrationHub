@@ -1,3 +1,4 @@
+using IntegrationHub.Api.Background;
 using IntegrationHub.Application.Runs;
 using IntegrationHub.Infrastructure.Logging;
 using IntegrationHub.Infrastructure.Persistence;
@@ -19,6 +20,7 @@ builder.Services.AddHttpClient("integration-client").AddStandardResilienceHandle
 
 builder.Services.AddScoped<RunLogService>();
 builder.Services.AddScoped<IIntegrationRunner, IntegrationRunner>();
+builder.Services.AddHostedService<IntegrationRunWorker>();
 
 
 var app = builder.Build();
