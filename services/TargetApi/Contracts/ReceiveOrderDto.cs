@@ -2,7 +2,6 @@
 
 public sealed record ReceiveOrderDto(
     int OrderId,
-    string CustomerName,
-    decimal Total,
-    DateTimeOffset CreatedAt
+    string Customer,
+    decimal Total
     );

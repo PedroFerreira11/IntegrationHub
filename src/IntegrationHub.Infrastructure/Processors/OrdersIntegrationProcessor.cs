@@ -20,7 +20,10 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
         CancellationToken ct)
     {
         var orders = await FetchOrdersAsync(http, run, buffer, ct);
-        await SendOrdersAsync(http, run, orders, buffer, ct);
+
+        var mappedOrders  = MapOrders(orders, buffer);
+        
+        await SendOrdersAsync(http, run, mappedOrders, buffer, ct);
     }
 
     private static string BuildOrdersUrl(string baseUrl)
@@ -28,7 +31,7 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
         return $"{baseUrl.TrimEnd('/')}{OrdersPath}";
     }
 
-    private static async Task<List<OrderDto>> FetchOrdersAsync(
+    private static async Task<List<SourceOrderDto>> FetchOrdersAsync(
         HttpClient http,
         IntegrationRun run,
         RunLogBuffer buffer,
@@ -37,8 +40,8 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
         var sourceUrl = BuildOrdersUrl(run.Integration.SourceEndpoint.BaseUrl);
         buffer.Info($"Fetching orders from: {sourceUrl}");
 
-        var orders = await http.GetFromJsonAsync<List<OrderDto>>(sourceUrl, ct)
-                     ?? new List<OrderDto>();
+        var orders = await http.GetFromJsonAsync<List<SourceOrderDto>>(sourceUrl, ct)
+                     ?? new List<SourceOrderDto>();
 
         buffer.Info($"Fetched {orders.Count} orders");
 
@@ -48,12 +51,12 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
     private static async Task SendOrdersAsync(
         HttpClient http,
         IntegrationRun run,
-        List<OrderDto> orders,
+        List<TargetOrderDto> orders,
         RunLogBuffer buffer,
         CancellationToken ct)
     {
         var targetUrl = BuildOrdersUrl(run.Integration.TargetEndpoint.BaseUrl);
-        buffer.Info($"Sending orders to: {targetUrl}");
+        buffer.Info($"Sending {orders.Count} orders to: {targetUrl}");
 
         var response = await http.PostAsJsonAsync(targetUrl, orders, ct);
         var responseBody = await response.Content.ReadAsStringAsync(ct);
@@ -65,5 +68,18 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
         }
 
         buffer.Info($"Target OK: {responseBody}");
+    }
+
+    private static List<TargetOrderDto> MapOrders(List<SourceOrderDto> sourceOrders, RunLogBuffer buffer)
+    {
+        buffer.Info($"Mapping {sourceOrders.Count} orders");
+        
+        return sourceOrders
+            .Select(o => new TargetOrderDto(
+                o.OrderId,
+                o.CustomerName,
+                o.Total
+            ))
+            .ToList();
     }
 }
