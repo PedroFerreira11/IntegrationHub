@@ -28,6 +28,7 @@ public class IntegrationsController : ControllerBase
             .Select(i=> new IntegrationResponse(
                 i.Id,
                 i.Name,
+                i.Type,
                 i.SourceEndpointId,
                 i.SourceEndpoint.Name,
                 i.TargetEndpointId,
@@ -54,6 +55,7 @@ public class IntegrationsController : ControllerBase
         var entity = new Integration
         {
             Name = request.Name,
+            Type = request.Type,
             SourceEndpointId = source.Id,
             TargetEndpointId = target.Id,
             IsActive = request.IsActive
@@ -65,6 +67,7 @@ public class IntegrationsController : ControllerBase
         var response = new IntegrationResponse(
             entity.Id,
             entity.Name,
+            entity.Type,
             source.Id,
             source.Name,
             target.Id,
@@ -88,6 +91,7 @@ public class IntegrationsController : ControllerBase
         var response = new IntegrationResponse(
             integration.Id,
             integration.Name,
+            integration.Type,
             integration.SourceEndpointId,
             integration.SourceEndpoint.Name,
             integration.TargetEndpointId,

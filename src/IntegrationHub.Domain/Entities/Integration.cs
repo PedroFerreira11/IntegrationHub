@@ -1,10 +1,12 @@
-﻿namespace IntegrationHub.Domain.Entities;
+﻿using IntegrationHub.Domain.Enums;
+
+namespace IntegrationHub.Domain.Entities;
 
 public class Integration
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "";
-    
+    public IntegrationType Type  { get; set; }
     public Guid SourceEndpointId { get; set; }
     public Guid TargetEndpointId { get; set; }
     
