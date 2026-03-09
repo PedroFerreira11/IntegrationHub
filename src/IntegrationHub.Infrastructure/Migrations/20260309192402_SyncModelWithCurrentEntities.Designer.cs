@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IntegrationHub.Infrastructure.Migrations
 {
     [DbContext(typeof(IntegrationHubDbContext))]
-    [Migration("20260309135420_AddIntegrationType")]
-    partial class AddIntegrationType
+    [Migration("20260309192402_SyncModelWithCurrentEntities")]
+    partial class SyncModelWithCurrentEntities
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -129,6 +129,9 @@ namespace IntegrationHub.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ApiKey")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ApiKeyHeaderName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BaseUrl")

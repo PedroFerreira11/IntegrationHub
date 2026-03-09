@@ -39,10 +39,18 @@ public class EndpointsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EndpointResponse>> Create(CreateEndpointRequest request, CancellationToken ct)
     {
+        var hasApiKey = !string.IsNullOrWhiteSpace(request.ApiKey);
+        var hasHeaderName = !string.IsNullOrWhiteSpace(request.ApiKeyHeaderName);
+
+        if (hasApiKey != hasHeaderName)
+        {
+            return BadRequest("ApiKey e ApiKeyHeaderName devem ser fornecidos em conjunto.");
+        }
+        
         var entity = new SystemEndpoint
         {
             Name = request.Name,
-            BaseUrl = request.BaseUrl,
+            BaseUrl = request.BaseUrl.TrimEnd('/'),
             ApiKey = request.ApiKey,
             ApiKeyHeaderName = request.ApiKeyHeaderName,
             IsActive = request.IsActive

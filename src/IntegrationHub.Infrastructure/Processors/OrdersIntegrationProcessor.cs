@@ -40,7 +40,21 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
         var sourceUrl = BuildOrdersUrl(run.Integration.SourceEndpoint.BaseUrl);
         buffer.Info($"Fetching orders from: {sourceUrl}");
 
-        var orders = await http.GetFromJsonAsync<List<SourceOrderDto>>(sourceUrl, ct)
+        using var request = new HttpRequestMessage(HttpMethod.Get, sourceUrl);
+        ApplyApiKeyHeader(request, run.Integration.SourceEndpoint);
+
+        buffer.Info(
+            $"Source auth config - Header: {run.Integration.SourceEndpoint.ApiKeyHeaderName}, HasKey: {!string.IsNullOrWhiteSpace(run.Integration.SourceEndpoint.ApiKey)}");
+        using var response = await http.SendAsync(request, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+            buffer.Error($"Source returned {(int)response.StatusCode}: {errorBody}");
+            throw new InvalidOperationException($"Source returned {(int)response.StatusCode}");
+        }
+
+        var orders = await response.Content.ReadFromJsonAsync<List<SourceOrderDto>>(cancellationToken: ct)
                      ?? new List<SourceOrderDto>();
 
         buffer.Info($"Fetched {orders.Count} orders");
@@ -57,8 +71,15 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
     {
         var targetUrl = BuildOrdersUrl(run.Integration.TargetEndpoint.BaseUrl);
         buffer.Info($"Sending {orders.Count} orders to: {targetUrl}");
-
-        var response = await http.PostAsJsonAsync(targetUrl, orders, ct);
+        
+        using var request = new HttpRequestMessage(HttpMethod.Post, targetUrl)
+        {
+            Content = JsonContent.Create(orders)
+        };
+        
+        ApplyApiKeyHeader(request, run.Integration.TargetEndpoint);
+        
+        using var response = await http.SendAsync(request, ct);
         var responseBody = await response.Content.ReadAsStringAsync(ct);
 
         if (!response.IsSuccessStatusCode)
@@ -81,5 +102,16 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
                 o.Total
             ))
             .ToList();
+    }
+    
+    private static void ApplyApiKeyHeader(HttpRequestMessage request, SystemEndpoint endpoint)
+    {
+        var hasApiKey = !string.IsNullOrWhiteSpace(endpoint.ApiKey);
+        var hasHeaderName = !string.IsNullOrWhiteSpace(endpoint.ApiKeyHeaderName);
+
+        if (hasApiKey && hasHeaderName)
+        {
+            request.Headers.TryAddWithoutValidation(endpoint.ApiKeyHeaderName, endpoint.ApiKey);
+        }
     }
 }
