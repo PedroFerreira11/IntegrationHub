@@ -4,6 +4,7 @@ using IntegrationHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IntegrationHub.Infrastructure.Migrations
 {
     [DbContext(typeof(IntegrationHubDbContext))]
-    partial class IntegrationHubDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260309175453_AddApiKeyHeaderToSystemEndpoint")]
+    partial class AddApiKeyHeaderToSystemEndpoint
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

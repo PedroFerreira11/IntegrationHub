@@ -24,8 +24,15 @@ public class EndpointsController : ControllerBase
         var endpoints = await _db.SystemEndpoints
             .AsNoTracking()
             .OrderBy(e => e.Name)
-            .Select(e => new EndpointResponse(e.Id, e.Name, e.BaseUrl, e.IsActive)).ToListAsync(ct);
-        
+            .Select(e => new EndpointResponse(
+                e.Id,
+                e.Name,
+                e.BaseUrl,
+                !string.IsNullOrWhiteSpace(e.ApiKey),
+                e.ApiKeyHeaderName,
+                e.IsActive))
+            .ToListAsync(ct);
+
         return Ok(endpoints);
     }
 
@@ -35,15 +42,23 @@ public class EndpointsController : ControllerBase
         var entity = new SystemEndpoint
         {
             Name = request.Name,
-            BaseUrl =  request.BaseUrl,
-            ApiKey =  request.ApiKey,
-            IsActive =  request.IsActive
+            BaseUrl = request.BaseUrl,
+            ApiKey = request.ApiKey,
+            ApiKeyHeaderName = request.ApiKeyHeaderName,
+            IsActive = request.IsActive
         };
-        
+
         _db.SystemEndpoints.Add(entity);
         await _db.SaveChangesAsync(ct);
-        
-        var response = new EndpointResponse(entity.Id, entity.Name, entity.BaseUrl, entity.IsActive);
+
+        var response = new EndpointResponse(
+            entity.Id,
+            entity.Name,
+            entity.BaseUrl,
+            !string.IsNullOrWhiteSpace(entity.ApiKey),
+            entity.ApiKeyHeaderName,
+            entity.IsActive);
+
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
     }
 
@@ -53,8 +68,16 @@ public class EndpointsController : ControllerBase
         var e = await _db.SystemEndpoints
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == id, ct);
-        if (e is null) return NotFound();
-        
-        return Ok(new EndpointResponse(e.Id, e.Name, e.BaseUrl, e.IsActive));
+
+        if (e is null)
+            return NotFound();
+
+        return Ok(new EndpointResponse(
+            e.Id,
+            e.Name,
+            e.BaseUrl,
+            !string.IsNullOrWhiteSpace(e.ApiKey),
+            e.ApiKeyHeaderName,
+            e.IsActive));
     }
 }

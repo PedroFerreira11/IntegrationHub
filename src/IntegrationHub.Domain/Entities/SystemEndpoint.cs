@@ -6,6 +6,7 @@ public class SystemEndpoint
     public string Name { get; set; } = "";
     public string BaseUrl { get; set; } = "";
     public string? ApiKey { get; set; }
+    public string? ApiKeyHeaderName { get; set; }
     public bool IsActive { get; set; } = true;
     
     public List<Integration> SourceIntegrations { get; set; } = new();
