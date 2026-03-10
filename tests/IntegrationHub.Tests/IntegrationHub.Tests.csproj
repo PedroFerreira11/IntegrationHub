@@ -14,6 +14,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.24" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.24" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.5.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
@@ -26,6 +28,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\IntegrationHub.Application\IntegrationHub.Application.csproj" />
     <ProjectReference Include="..\..\src\IntegrationHub.Domain\IntegrationHub.Domain.csproj" />
+    <ProjectReference Include="..\..\src\IntegrationHub.Infrastructure\IntegrationHub.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Api\Background\" />
+    <Folder Include="TestDoubles\" />
   </ItemGroup>
 
 </Project>
