@@ -44,7 +44,7 @@ public class EndpointsController : ControllerBase
 
         if (hasApiKey != hasHeaderName)
         {
-            return BadRequest("ApiKey e ApiKeyHeaderName devem ser fornecidos em conjunto.");
+            return BadRequest("ApiKey e ApiKeyHeaderName can't be null or empty.");
         }
         
         var entity = new SystemEndpoint
