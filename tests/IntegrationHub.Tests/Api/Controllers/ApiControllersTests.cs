@@ -1,6 +1,7 @@
 using IntegrationHub.Api.Contracts.Endpoints;
 using IntegrationHub.Api.Contracts.Integrations;
 using IntegrationHub.Api.Controllers;
+using IntegrationHub.Application.Runs;
 using IntegrationHub.Domain.Entities;
 using IntegrationHub.Domain.Enums;
 using IntegrationHub.Infrastructure.Persistence;
@@ -129,6 +130,100 @@ public class EndpointsControllerTests
 public class IntegrationsControllersTests
 {
     [Fact]
+    public async Task GetAll_WhenIntegrationsExist_ReturnsOrderedList()
+    {
+        var options = TestDb.CreateOptions();
+        await using var db = new IntegrationHubDbContext(options);
+        var controller = new IntegrationsController(db);
+
+        var sourceB = TestDb.CreateSystemEndpoint(db, "Source B");
+        var targetB = TestDb.CreateSystemEndpoint(db, "Target B");
+        var sourceA = TestDb.CreateSystemEndpoint(db, "Source A");
+        var targetA = TestDb.CreateSystemEndpoint(db, "Target A");
+        await db.SaveChangesAsync();
+
+        db.Integrations.AddRange(
+            new Integration
+            {
+                Name = "Integration B",
+                Type = IntegrationType.Orders,
+                SourceEndpointId = sourceB.Id,
+                TargetEndpointId = targetB.Id,
+                IsActive = true
+            },
+            new Integration
+            {
+                Name = "Integration A",
+                Type = IntegrationType.Orders,
+                SourceEndpointId = sourceA.Id,
+                TargetEndpointId = targetA.Id,
+                IsActive = true
+            });
+        await db.SaveChangesAsync();
+
+        var result = await controller.GetAll(CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<List<IntegrationResponse>>(ok.Value);
+
+        Assert.Equal(2, response.Count);
+        Assert.Equal("Integration A", response[0].Name);
+        Assert.Equal("Integration B", response[1].Name);
+        Assert.Equal("Source A", response[0].SourceEndpointName);
+        Assert.Equal("Target A", response[0].TargetEndpointName);
+    }
+
+    [Fact]
+    public async Task GetById_WhenIntegrationExists_ReturnsOk()
+    {
+        var options = TestDb.CreateOptions();
+        await using var db = new IntegrationHubDbContext(options);
+        var controller = new IntegrationsController(db);
+
+        var source = TestDb.CreateSystemEndpoint(db, "Source");
+        var target = TestDb.CreateSystemEndpoint(db, "Target");
+        await db.SaveChangesAsync();
+
+        var integration = new Integration
+        {
+            Name = "Integration",
+            Type = IntegrationType.Orders,
+            SourceEndpointId = source.Id,
+            TargetEndpointId = target.Id,
+            IsActive = true
+        };
+
+        db.Integrations.Add(integration);
+        await db.SaveChangesAsync();
+
+        var result = await controller.GetById(integration.Id, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<IntegrationResponse>(ok.Value);
+
+        Assert.Equal(integration.Id, response.Id);
+        Assert.Equal("Integration", response.Name);
+        Assert.Equal(IntegrationType.Orders, response.Type);
+        Assert.Equal(source.Id, response.SourceEndpointId);
+        Assert.Equal(target.Id, response.TargetEndpointId);
+        Assert.Equal("Source", response.SourceEndpointName);
+        Assert.Equal("Target", response.TargetEndpointName);
+        Assert.True(response.IsActive);
+    }
+
+    [Fact]
+    public async Task GetById_WhenIntegrationDoesNotExist_ReturnsNotFound()
+    {
+        var options = TestDb.CreateOptions();
+        await using var db = new IntegrationHubDbContext(options);
+        var controller = new IntegrationsController(db);
+
+        var result = await controller.GetById(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
     public async Task Create_WhenRequestIsValid_PersistsIntegrationAndReturnsCreated()
     {
         var options = TestDb.CreateOptions();
@@ -242,6 +337,47 @@ public class IntegrationsControllersTests
     }
 }
 
+public class RunsControllerTests
+{
+    [Fact]
+    public async Task CreateRun_WhenIntegrationExists_PersistsPendingRunAndReturnsAccepted()
+    {
+        var options = TestDb.CreateOptions();
+        await using var db = new IntegrationHubDbContext(options);
+        
+        var integration = await TestDb.AddIntegrationAsync(db, "Integration", IntegrationType.Orders);
+        var controller = new RunsController(new TestDb.FakeIntegrationRunner(), db);
+        
+        var result = await controller.CreateRun(integration.Id, CancellationToken.None);
+        
+        var accepted =  Assert.IsType<AcceptedResult>(result);
+        Assert.Equal(integration.Id, TestObjectReader.GetProperty<Guid>(accepted.Value!, "IntegrationId"));
+        Assert.Equal("Pending", TestObjectReader.GetProperty<string>(accepted.Value!, "Status"));
+        
+        var saved = await db.IntegrationRuns.SingleAsync();
+        Assert.Equal(integration.Id, saved.IntegrationId);
+        Assert.Equal(RunStatus.Pending, saved.Status);
+        Assert.Equal(0, saved.RetryCount);
+        Assert.Equal(3, saved.MaxRetries);
+    }
+
+    [Fact]
+    public async Task CreateRun_WhenIntegrationDoesNotExists_ReturnsNotFound()
+    {
+        var options = TestDb.CreateOptions();
+        await using var db = new IntegrationHubDbContext(options);
+        
+        var controller = new RunsController(new TestDb.FakeIntegrationRunner(), db);
+        
+        var integrationId = Guid.NewGuid();
+        var result = await controller.CreateRun(integrationId, CancellationToken.None);
+        
+        Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Empty(db.IntegrationRuns);
+    }
+    
+}
+
 internal static class TestDb
 {
     public static DbContextOptions<IntegrationHubDbContext> CreateOptions()
@@ -264,5 +400,51 @@ internal static class TestDb
         
         db.SystemEndpoints.Add(endpoint);
         return endpoint;
+    }
+
+    public static async Task<Integration> AddIntegrationAsync(
+        IntegrationHubDbContext db,
+        string name,
+        IntegrationType type)
+    {
+        var source = CreateSystemEndpoint(db,"Source");
+        var target = CreateSystemEndpoint(db,"Target" );
+        await db.SaveChangesAsync();
+         
+        var integration = new Integration
+        {
+            Name = name,
+            Type = type,
+            SourceEndpoint = source,
+            TargetEndpoint = target,
+            IsActive = true
+        };
+
+        db.Integrations.Add(integration);
+        await db.SaveChangesAsync();
+
+        return integration;
+    }
+    
+    public sealed class FakeIntegrationRunner : IIntegrationRunner
+    {
+        public Task RunAsync(Guid runId, CancellationToken ct)
+        {
+            return Task.CompletedTask;
+        }
+    }
+}
+
+internal static class TestObjectReader
+{
+    public static T GetProperty<T>(object instance, string propertyName)
+    {
+        var property = instance.GetType().GetProperty(propertyName);
+        Assert.NotNull(property);
+
+        var value = property.GetValue(instance);
+        Assert.IsType<T>(value);
+
+        return (T)value;
     }
 }
