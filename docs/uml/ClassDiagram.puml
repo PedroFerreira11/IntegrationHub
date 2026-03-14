@@ -1,17 +1,22 @@
-﻿@startuml
-title IntegrationHub - Domain Class Diagram (Core)
+@startuml
+title IntegrationHub - Domain Class Diagram
+
+skinparam classAttributeIconSize 0
+hide empty members
 
 class SystemEndpoint {
   +Guid Id
   +string Name
   +string BaseUrl
   +string? ApiKey
+  +string? ApiKeyHeaderName
   +bool IsActive
 }
 
 class Integration {
   +Guid Id
   +string Name
+  +IntegrationType Type
   +Guid SourceEndpointId
   +Guid TargetEndpointId
   +bool IsActive
@@ -20,10 +25,14 @@ class Integration {
 class IntegrationRun {
   +Guid Id
   +Guid IntegrationId
-  +DateTimeOffset StartedAt
+  +DateTimeOffset CreatedAt
+  +DateTimeOffset? StartedAt
   +DateTimeOffset? FinishedAt
   +RunStatus Status
   +string? ErrorMessage
+  +int RetryCount
+  +int MaxRetries
+  +DateTimeOffset? NextRetryAt
 }
 
 class IntegrationLog {
@@ -34,8 +43,14 @@ class IntegrationLog {
   +string Message
 }
 
+enum IntegrationType {
+  Orders
+  Customers
+}
+
 enum RunStatus {
   Pending
+  Running
   Success
   Failed
 }
@@ -48,47 +63,11 @@ enum LogLevel {
 
 SystemEndpoint "1" <-- "0..*" Integration : source
 SystemEndpoint "1" <-- "0..*" Integration : target
+Integration "1" <-- "0..*" IntegrationRun : runs
+IntegrationRun "1" <-- "0..*" IntegrationLog : logs
 
-Integration "1" <-- "0..*" IntegrationRun
-IntegrationRun "1" <-- "0..*" IntegrationLog
-
-class MappingRule {
-  +Guid Id
-  +Guid IntegrationId
-  +string SourceField
-  +string TargetField
-  +TransformType Transform
-}
-
-enum TransformType {
-  None
-  Uppercase
-  Trim
-  DateFormat
-}
-
-Integration "1" <-- "0..*" MappingRule
-
-class SupportTicket {
-  +Guid Id
-  +string Title
-  +string Description
-  +TicketStatus Status
-  +DateTimeOffset CreatedAt
-}
-
-enum TicketStatus {
-  Open
-  InProgress
-  Resolved
-  Closed
-}
-
-class KnowledgeBaseArticle {
-  +Guid Id
-  +string Title
-  +string Content
-  +DateTimeOffset UpdatedAt
-}
+Integration ..> IntegrationType
+IntegrationRun ..> RunStatus
+IntegrationLog ..> LogLevel
 
 @enduml

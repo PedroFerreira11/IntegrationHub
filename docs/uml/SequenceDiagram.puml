@@ -1,0 +1,66 @@
+@startuml
+title IntegrationHub - Run Creation and Processing Sequence
+
+actor Client
+participant "RunsController" as RunsController
+participant "IntegrationHubDbContext" as Db
+participant "IntegrationRunWorker" as Worker
+participant "IntegrationRunProcessor" as Processor
+participant "IntegrationRunner" as Runner
+participant "IntegrationProcessorResolver" as Resolver
+participant "IIntegrationProcessor" as SpecificProcessor
+participant "RunLogService" as LogService
+participant "Source API" as SourceApi
+participant "Target API" as TargetApi
+
+Client -> RunsController : POST /api/integrations/{integrationId}/runs
+RunsController -> Db : Check integration exists
+Db --> RunsController : exists / missing
+
+alt Integration not found
+  RunsController --> Client : 404 Not Found
+else Integration exists
+  RunsController -> Db : Insert IntegrationRun(Status=Pending)
+  Db --> RunsController : saved
+  RunsController --> Client : 202 Accepted + run id
+end
+
+loop Polling cycle
+  Worker -> Processor : TryProcessNextRunAsync()
+  Processor -> Db : Load next pending runnable run
+  Db --> Processor : run / none
+
+  alt No runnable run
+    Processor --> Worker : false
+  else Run found
+    Processor -> Db : Mark run as Running\nset StartedAt
+    Processor -> Runner : RunAsync(runId)
+
+    Runner -> Db : Load run + integration + endpoints
+    Db --> Runner : hydrated run
+    Runner -> Resolver : Resolve(integration.Type)
+    Resolver --> Runner : concrete processor
+    Runner -> SpecificProcessor : ProcessAsync(run, http, buffer, ct)
+    SpecificProcessor -> SourceApi : GET source data
+    SourceApi --> SpecificProcessor : payload
+    SpecificProcessor -> TargetApi : POST transformed data
+    TargetApi --> SpecificProcessor : response
+    SpecificProcessor --> Runner : completed
+    Runner -> LogService : AppendAsync(buffer.Logs)
+    LogService --> Runner : persisted
+
+    alt Processing succeeded
+      Runner --> Processor : success
+      Processor -> Db : Mark run as Success\nset FinishedAt
+      Db --> Processor : saved
+    else Processing failed
+      Runner --> Processor : throws exception
+      Processor -> Db : Increment RetryCount\nschedule retry or mark failed
+      Db --> Processor : saved
+    end
+
+    Processor --> Worker : true
+  end
+end
+
+@enduml
