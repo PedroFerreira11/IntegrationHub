@@ -1,0 +1,48 @@
+﻿@model IntegrationHub.Web.Models.Integrations.CreateIntegrationViewModel
+
+<h2>Create Integration</h2>
+
+<form asp-action="Create" method="post">
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name"></span>
+    </div>
+
+    <div>
+        <label asp-for="Type"></label>
+        <select asp-for="Type" asp-items="Html.GetEnumSelectList<IntegrationHub.Domain.Enums.IntegrationType>()"></select>
+        <span asp-validation-for="Type"></span>
+    </div>
+
+    <div>
+        <label asp-for="SourceEndpointId">Source Endpoint</label>
+        <select asp-for="SourceEndpointId">
+            <option value="">Select source endpoint</option>
+            @foreach (var endpoint in Model.Endpoints)
+            {
+                <option value="@endpoint.Id">@endpoint.Name</option>
+            }
+        </select>
+        <span asp-validation-for="SourceEndpointId"></span>
+    </div>
+
+    <div>
+        <label asp-for="TargetEndpointId">Target Endpoint</label>
+        <select asp-for="TargetEndpointId">
+            <option value="">Select target endpoint</option>
+            @foreach (var endpoint in Model.Endpoints)
+            {
+                <option value="@endpoint.Id">@endpoint.Name</option>
+            }
+        </select>
+        <span asp-validation-for="TargetEndpointId"></span>
+    </div>
+
+    <div>
+        <label asp-for="IsActive"></label>
+        <input asp-for="IsActive" type="checkbox" />
+    </div>
+
+    <button type="submit">Create</button>
+</form>

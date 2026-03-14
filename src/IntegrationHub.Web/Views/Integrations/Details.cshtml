@@ -1,0 +1,13 @@
+﻿@model IntegrationHub.Web.Models.Integrations.IntegrationResponse
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h2>Integration Details</h2>
+
+<p><strong>Name:</strong> @Model.Name</p>
+<p><strong>Type:</strong> @Model.Type</p>
+<p><strong>Source:</strong> @Model.SourceEndpointName</p>
+<p><strong>Target:</strong> @Model.TargetEndpointName</p>
+<p><strong>Active:</strong> @Model.IsActive</p>

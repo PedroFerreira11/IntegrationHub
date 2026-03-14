@@ -1,0 +1,46 @@
+﻿@model List<IntegrationHub.Web.Models.Integrations.IntegrationResponse>
+
+@{
+    ViewData["Title"] = "Integrations";
+}
+
+<h2>Integrations</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <p>No Integrations Found!</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        @foreach (var integration in Model)
+        {
+            <tr>
+                <td>@integration.Id</td>
+                <td>@integration.Name</td>
+                <td>@integration.Type</td>
+                <td>@integration.SourceEndpointName</td>
+                <td>@integration.TargetEndpointName</td>
+                <td>@integration.IsActive</td>
+                <td>
+                    <a asp-controller="Integrations"
+                       asp-action="Details"
+                       asp-route-id="@integration.Id">
+                        Details
+                    </a>
+                </td>
+            </tr>
+        }
+    </table>
+}
