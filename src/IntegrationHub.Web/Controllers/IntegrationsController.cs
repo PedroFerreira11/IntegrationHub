@@ -80,4 +80,22 @@ public class IntegrationsController : Controller
 
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var client = _client.CreateClient("MyApi");
+        var response = await client.DeleteAsync($"{_integrationsUrl}/{id}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            TempData["ErrorMessage"] = string.IsNullOrWhiteSpace(error)
+                ? "Error deleting integration."
+                : error;
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
 }

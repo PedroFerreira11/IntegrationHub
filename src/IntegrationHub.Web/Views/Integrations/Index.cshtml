@@ -6,6 +6,11 @@
 
 <h2>Integrations</h2>
 
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
 @if (Model == null || !Model.Any())
 {
     <p>No Integrations Found!</p>
@@ -39,6 +44,14 @@ else
                        asp-route-id="@integration.Id">
                         Details
                     </a>
+                    <form asp-controller="Integrations"
+                          asp-action="Delete"
+                          asp-route-id="@integration.Id"
+                          method="post"
+                          style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-link p-0">Delete</button>
+                    </form>
                 </td>
             </tr>
         }

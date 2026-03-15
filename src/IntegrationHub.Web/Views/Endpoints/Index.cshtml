@@ -6,6 +6,11 @@
 
 <h2>Endpoints</h2>
 
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
 @if (Model == null || !Model.Any())
 {
     <p>No Endpoints Found!!</p>
@@ -35,6 +40,14 @@ else
                        asp-route-id="@endpoint.Id">
                         Details
                     </a>
+                    <form asp-controller="Endpoints"
+                          asp-action="Delete"
+                          asp-route-id="@endpoint.Id"
+                          method="post"
+                          style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-link p-0">Delete</button>
+                    </form>
                 </td>
             </tr>
         }

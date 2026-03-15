@@ -22,6 +22,14 @@ public class EndpointsController : Controller
         return View(endpoints);
     }
 
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var client = _client.CreateClient("MyApi");
+        
+        var endpoint = await client.GetFromJsonAsync<EndpointDto>($"{_endpointsUrl}/{id}");
+        return View(endpoint);
+    }
+
     public async Task<IActionResult> Create()
     {
         var model = new CreateEndpointDto();
@@ -52,6 +60,24 @@ public class EndpointsController : Controller
             var error = await response.Content.ReadAsStringAsync();
             ModelState.AddModelError("", error);
             return View(model);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var client = _client.CreateClient("MyApi");
+        var response = await client.DeleteAsync($"{_endpointsUrl}/{id}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            TempData["ErrorMessage"] = string.IsNullOrWhiteSpace(error)
+                ? "Error deleting endpoint."
+                : error;
         }
 
         return RedirectToAction(nameof(Index));
