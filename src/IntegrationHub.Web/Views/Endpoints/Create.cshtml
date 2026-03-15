@@ -1,0 +1,33 @@
+﻿@model IntegrationHub.Web.Models.Endpoints.CreateEndpointDto
+
+<h2>Create Endpoint</h2>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All"></div>
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name"/>
+        <span asp-validation-for="Name"></span>
+    </div>
+    <div>
+        <label asp-for="BaseUrl"></label>
+        <input asp-for="BaseUrl"/>
+        <span asp-validation-for="BaseUrl"></span>
+    </div>
+    <div>
+        <label asp-for="ApiKey"></label>
+        <input asp-for="ApiKey"/>
+        <span asp-validation-for="ApiKey"></span>
+    </div>
+    <div>
+        <label asp-for="ApiKeyHeaderName"></label>
+        <input asp-for="ApiKeyHeaderName"/>
+        <span asp-validation-for="ApiKeyHeaderName"></span>
+    </div>
+    <div>
+        <label asp-for="IsActive"></label>
+        <input asp-for="IsActive" type="checkbox"/>
+    </div>
+
+    <button type="submit">Create</button>
+</form>

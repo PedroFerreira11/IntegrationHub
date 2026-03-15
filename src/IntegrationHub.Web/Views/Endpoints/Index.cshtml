@@ -1,0 +1,46 @@
+﻿@model List<IntegrationHub.Web.Models.Endpoints.EndpointDto>
+
+@{
+    ViewData["Title"] = "Endpoints";
+}
+
+<h2>Endpoints</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <p>No Endpoints Found!!</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>BaseUrl</th>
+            <th>IsActive</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        @foreach (var endpoint in Model)
+        {
+            <tr>
+                <td>@endpoint.Id</td>
+                <td>@endpoint.Name</td>
+                <td>@endpoint.BaseUrl</td>
+                <td>@endpoint.IsActive</td>
+                <td>
+                    <a asp-controller="Endpoints"
+                       asp-action="Details"
+                       asp-route-id="@endpoint.Id">
+                        Details
+                    </a>
+                </td>
+            </tr>
+        }
+    </table>
+}
+<p>
+    <a class="btn btn-primary" asp-controller="Endpoints" asp-action="Create">Create</a>
+</p>
+
