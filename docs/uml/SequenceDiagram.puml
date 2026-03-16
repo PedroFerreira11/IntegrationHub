@@ -1,5 +1,5 @@
 @startuml
-title IntegrationHub - Run Creation and Processing Sequence
+title IntegrationHub - Generic Integration Run Sequence
 
 actor Client
 participant "RunsController" as RunsController
@@ -41,10 +41,19 @@ loop Polling cycle
     Runner -> Resolver : Resolve(integration.Type)
     Resolver --> Runner : concrete processor
     Runner -> SpecificProcessor : ProcessAsync(run, http, buffer, ct)
-    SpecificProcessor -> SourceApi : GET source data
-    SourceApi --> SpecificProcessor : payload
-    SpecificProcessor -> TargetApi : POST transformed data
-    TargetApi --> SpecificProcessor : response
+
+    alt IntegrationType = Orders
+      SpecificProcessor -> SourceApi : GET /api/orders
+      SourceApi --> SpecificProcessor : SourceOrderDto[]
+      SpecificProcessor -> TargetApi : POST /api/orders
+      TargetApi --> SpecificProcessor : receive result
+    else IntegrationType = Customers
+      SpecificProcessor -> SourceApi : GET /api/customers
+      SourceApi --> SpecificProcessor : SourceCustomerDto[]
+      SpecificProcessor -> TargetApi : POST /api/customers
+      TargetApi --> SpecificProcessor : receive result
+    end
+
     SpecificProcessor --> Runner : completed
     Runner -> LogService : AppendAsync(buffer.Logs)
     LogService --> Runner : persisted

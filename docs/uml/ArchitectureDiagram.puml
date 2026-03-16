@@ -24,6 +24,10 @@ package "Application / Infrastructure" {
   class IntegrationProcessorResolver
   class OrdersIntegrationProcessor
   class CustomersIntegrationProcessor
+  class SourceOrderDto
+  class TargetOrderDto
+  class SourceCustomerDto
+  class TargetCustomerDto
   class RunLogService
 }
 
@@ -64,6 +68,10 @@ OrdersIntegrationProcessor --> SourceApi
 OrdersIntegrationProcessor --> TargetApi
 CustomersIntegrationProcessor --> SourceApi
 CustomersIntegrationProcessor --> TargetApi
+OrdersIntegrationProcessor --> SourceOrderDto
+OrdersIntegrationProcessor --> TargetOrderDto
+CustomersIntegrationProcessor --> SourceCustomerDto
+CustomersIntegrationProcessor --> TargetCustomerDto
 
 IntegrationHubDbContext --> SystemEndpoint
 IntegrationHubDbContext --> Integration

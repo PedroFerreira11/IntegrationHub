@@ -29,6 +29,7 @@ The solution is split into the following projects:
 - Create and list external system endpoints
 - Create and list integrations between source and target endpoints
 - Trigger integration runs through the API or Web UI
+- Execute `Orders` and `Customers` integrations end-to-end
 - Process runs asynchronously with `BackgroundService`
 - Retry failed runs with delayed reprocessing
 - Persist run status and run logs in SQL Server
@@ -183,9 +184,21 @@ After all services are running:
    - Base URL: `https://localhost:7220`
    - API key header: `x-api-key`
    - API key: `target-secret-key`
-4. Create an integration of type `Orders`
+4. Create an integration of type `Orders` or `Customers`
 5. Open the integration details page and trigger a run
 6. Open the run details page and watch status and logs update in real time
+
+The mock services expose both resources under the same base URLs:
+
+- `Orders`
+  - Source: `GET /api/orders`
+  - Target: `POST /api/orders`
+- `Customers`
+  - Source: `GET /api/customers`
+  - Target: `POST /api/customers`
+
+This means you can reuse the same source and target endpoints and create
+multiple integrations that differ only by `Type`.
 
 You can also use Swagger in `IntegrationHub.Api` to create endpoints,
 integrations and runs directly through the REST API.
