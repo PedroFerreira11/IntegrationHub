@@ -1,11 +1,15 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
+
+var integrationHubApiBaseUrl = builder.Configuration["ServiceUrls:IntegrationHubApi"]
+    ?? throw new InvalidOperationException("Missing configuration: ServiceUrls:IntegrationHubApi");
+
 builder.Services.AddHttpClient("MyApi", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:44367/api/");
+    client.BaseAddress = new Uri($"{integrationHubApiBaseUrl.TrimEnd('/')}/api/");
 });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
