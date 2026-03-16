@@ -1,5 +1,6 @@
 ﻿using IntegrationHub.Web.Models.Endpoints;
 using IntegrationHub.Web.Models.Integrations;
+using IntegrationHub.Web.Models.Runs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IntegrationHub.Web.Controllers;
@@ -34,6 +35,31 @@ public class IntegrationsController : Controller
         return View(integration);
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Run(Guid id)
+    {
+        var client = _client.CreateClient("MyApi");
+
+        var response = await client.PostAsync($"integrations/{id}/runs", null);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            TempData["ErrorMessage"] = "Error running integration";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var run = await response.Content.ReadFromJsonAsync<CreateRunResponseDto>();
+
+        if (run is null)
+        {
+            TempData["ErrorMessage"] = "Run created but returned null";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        return RedirectToAction("Details", "Runs", new { id = run.Id });
+    }
+    
     public async Task<IActionResult> Create()
     {
         var client = _client.CreateClient("MyApi");

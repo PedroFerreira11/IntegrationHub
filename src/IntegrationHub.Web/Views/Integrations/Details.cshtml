@@ -6,8 +6,29 @@
 
 <h2>Integration Details</h2>
 
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
 <p><strong>Name:</strong> @Model.Name</p>
 <p><strong>Type:</strong> @Model.Type</p>
 <p><strong>Source:</strong> @Model.SourceEndpointName</p>
 <p><strong>Target:</strong> @Model.TargetEndpointName</p>
 <p><strong>Active:</strong> @Model.IsActive</p>
+
+<div class="d-flex gap-2">
+    <form asp-controller="Integrations"
+          asp-action="Run"
+          asp-route-id="@Model.Id"
+          method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-primary">Run Integration</button>
+    </form>
+
+    <a asp-controller="Integrations"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Back
+    </a>
+</div>

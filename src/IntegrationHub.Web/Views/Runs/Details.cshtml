@@ -1,0 +1,94 @@
+﻿@model IntegrationHub.Web.Models.Runs.RunDetailsResponseDto
+
+@{
+    ViewData["Title"] = "Run Details";
+}
+
+<h2>Run Details</h2>
+
+<div class="card">
+    <div class="card-body">
+        <p><strong>Run Id:</strong> @Model.Id</p>
+        <p><strong>Integration Id:</strong> @Model.IntegrationId</p>
+        <p><strong>Status:</strong> <span id="run-status">@Model.Status</span></p>
+        <p><strong>Created At:</strong> <span id="run-createdAt">@Model.CreatedAt</span></p>
+        <p><strong>Started At:</strong> <span id="run-startedAt">@(Model.StartedAt?.ToString() ?? "-")</span></p>
+        <p><strong>Finished At:</strong> <span id="run-finishedAt">@(Model.FinishedAt?.ToString() ?? "-")</span></p>
+        <p><strong>Retry Count:</strong> <span id="run-retries">@Model.RetryCount / @Model.MaxRetries</span></p>
+        <p><strong>Next Retry At:</strong> <span id="run-nextRetryAt">@(Model.NextRetryAt?.ToString() ?? "-")</span></p>
+        <p><strong>Error:</strong> <span id="run-error">@(Model.ErrorMessage ?? "-")</span></p>
+    </div>
+</div>
+<hr/>
+<h3>Logs</h3>
+
+
+<pre id="run-logs" class="border rounded p-3 bg-dark text-light" style="min-height: 300px;">
+Loading logs... * 
+</pre>
+
+@section Scripts
+{
+    <script>
+        const runId = '@Model.Id';
+        const statusUrl = `/Runs/Status/${runId}`;
+        const logsUrl = `/Runs/Logs/${runId}`;
+
+        let pollIntervalId = null;
+
+        function formatDate(value) {
+            return value ?? "-";
+        }
+
+        function isTerminal(status) {
+            return status === "Success" || status === "Failed";
+        }
+
+        async function loadRunStatus() {
+            const response = await fetch(statusUrl);
+            if (!response.ok) return null;
+
+            const run = await response.json();
+
+            document.getElementById("run-status").textContent = run.status;
+            document.getElementById("run-createdAt").textContent = formatDate(run.createdAt);
+            document.getElementById("run-startedAt").textContent = formatDate(run.startedAt);
+            document.getElementById("run-finishedAt").textContent = formatDate(run.finishedAt);
+            document.getElementById("run-retries").textContent = `${run.retryCount} / ${run.maxRetries}`;
+            document.getElementById("run-nextRetryAt").textContent = formatDate(run.nextRetryAt);
+            document.getElementById("run-error").textContent = formatDate(run.errorMessage);
+
+            return run;
+        }
+
+        async function loadRunLogs() {
+            const response = await fetch(logsUrl);
+            if (!response.ok) return;
+
+            const logs = await response.json();
+
+            const content = logs.length === 0
+                ? "No logs yet."
+                : logs.map(log => `[${log.timestamp}] ${log.level} : ${log.message}`).join('\n');
+
+            document.getElementById("run-logs").textContent = content;
+        }
+
+        async function refreshRun() {
+            try {
+                const run = await loadRunStatus();
+                await loadRunLogs();
+
+                if (run && isTerminal(run.status) && pollIntervalId) {
+                    clearInterval(pollIntervalId);
+                    pollIntervalId = null;
+                }
+            } catch (error) {
+                console.error("Failed to refresh run.", error);
+            }
+        }
+
+        refreshRun();
+        pollIntervalId = setInterval(refreshRun, 500);
+    </script>
+}
