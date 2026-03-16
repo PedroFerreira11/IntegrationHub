@@ -88,4 +88,23 @@ public class EndpointsController : ControllerBase
             e.ApiKeyHeaderName,
             e.IsActive));
     }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var endpoint = await _db.SystemEndpoints.FirstOrDefaultAsync(e => e.Id == id, ct);
+        if (endpoint is null)
+            return NotFound();
+
+        var isInUse = await _db.Integrations.AnyAsync(
+            i => i.SourceEndpointId == id || i.TargetEndpointId == id, ct);
+
+        if (isInUse)
+            return BadRequest("Endpoint cannot be deleted because it is used by an integration.");
+
+        _db.SystemEndpoints.Remove(endpoint);
+        await _db.SaveChangesAsync(ct);
+
+        return NoContent();
+    }
 }

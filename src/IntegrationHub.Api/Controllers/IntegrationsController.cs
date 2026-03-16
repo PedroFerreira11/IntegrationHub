@@ -101,4 +101,17 @@ public class IntegrationsController : ControllerBase
         
         return Ok(response);
     }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var integration = await _db.Integrations.FirstOrDefaultAsync(i => i.Id == id, ct);
+        if (integration is null) 
+            return NotFound();
+
+        _db.Integrations.Remove(integration);
+        await _db.SaveChangesAsync(ct);
+        
+        return NoContent();
+    }
 }

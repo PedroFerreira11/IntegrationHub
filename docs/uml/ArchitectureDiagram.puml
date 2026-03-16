@@ -1,0 +1,77 @@
+@startuml
+title IntegrationHub - Simple Architecture Overview
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "Web" {
+  class IntegrationsController
+  class CreateIntegrationViewModel
+}
+
+package "API" {
+  class EndpointsController
+  class "IntegrationsController" as ApiIntegrationsController
+  class RunsController
+  class IntegrationRunWorker
+}
+
+package "Application / Infrastructure" {
+  class IntegrationHubDbContext
+  class IntegrationRunProcessor
+  class IntegrationRunner
+  class IntegrationProcessorResolver
+  class OrdersIntegrationProcessor
+  class CustomersIntegrationProcessor
+  class RunLogService
+}
+
+package "Domain" {
+  class SystemEndpoint
+  class Integration
+  class IntegrationRun
+  class IntegrationLog
+}
+
+cloud "External Systems" {
+  class SourceApi
+  class TargetApi
+}
+
+IntegrationsController --> ApiIntegrationsController : HTTP calls
+IntegrationsController --> EndpointsController : HTTP calls
+IntegrationsController --> CreateIntegrationViewModel
+
+EndpointsController --> IntegrationHubDbContext
+ApiIntegrationsController --> IntegrationHubDbContext
+RunsController --> IntegrationHubDbContext
+RunsController --> IntegrationRun
+
+IntegrationRunWorker --> IntegrationRunProcessor
+IntegrationRunProcessor --> IntegrationHubDbContext
+IntegrationRunProcessor --> IntegrationRunner
+IntegrationRunProcessor --> IntegrationRun
+
+IntegrationRunner --> IntegrationHubDbContext
+IntegrationRunner --> IntegrationProcessorResolver
+IntegrationRunner --> RunLogService
+
+IntegrationProcessorResolver --> OrdersIntegrationProcessor
+IntegrationProcessorResolver --> CustomersIntegrationProcessor
+
+OrdersIntegrationProcessor --> SourceApi
+OrdersIntegrationProcessor --> TargetApi
+CustomersIntegrationProcessor --> SourceApi
+CustomersIntegrationProcessor --> TargetApi
+
+IntegrationHubDbContext --> SystemEndpoint
+IntegrationHubDbContext --> Integration
+IntegrationHubDbContext --> IntegrationRun
+IntegrationHubDbContext --> IntegrationLog
+
+SystemEndpoint <-- Integration : source/target
+Integration <-- IntegrationRun : runs
+IntegrationRun <-- IntegrationLog : logs
+
+@enduml
