@@ -38,12 +38,10 @@ The solution is split into the following projects:
 
 ## Current Scope
 
-The project currently has one integration flow implemented end-to-end:
+The project currently has two integration flows implemented end-to-end:
 
 - `Orders`
-
-The `Customers` integration type exists in the domain model but is not fully
-implemented yet.
+- `Customers`
 
 ## Architecture
 
@@ -221,7 +219,6 @@ CI also runs build and tests on pushes and pull requests through
 
 ## Known Limitations
 
-- `Customers` is not implemented end-to-end yet
 - There is no authentication or authorization in the main API or Web UI
 - Endpoint and integration editing is not implemented yet
 - Secrets are stored directly in the database for demo purposes

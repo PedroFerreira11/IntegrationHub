@@ -9,55 +9,88 @@ namespace IntegrationHub.Infrastructure.Processors;
 
 public sealed class CustomersIntegrationProcessor : IIntegrationProcessor
 {
-    //TODO: change to customers once source and target have that logic done!
-    //TODO: change ordersDTO to customers
-    private const string CustomersPath = "/api/orders";
-    
+    private const string CustomersPath = "/api/customers";
+
     public IntegrationType SupportedType => IntegrationType.Customers;
 
     public async Task ProcessAsync(
-        IntegrationRun run, 
-        HttpClient http, 
-        RunLogBuffer buffer, 
+        IntegrationRun run,
+        HttpClient http,
+        RunLogBuffer buffer,
         CancellationToken ct)
     {
         var customers = await FetchCustomersAsync(http, run, buffer, ct);
-        await SendCustomersAsync(http, run, customers, buffer, ct);
+
+        var mappedCustomers = MapCustomers(customers, buffer);
+
+        await SendCustomersAsync(http, run, mappedCustomers, buffer, ct);
     }
-    
+
     private static string BuildCustomersUrl(string baseUrl)
     {
         return $"{baseUrl.TrimEnd('/')}{CustomersPath}";
     }
 
-    private static async Task<List<OrderDto>> FetchCustomersAsync(
+    private static async Task<List<SourceCustomerDto>> FetchCustomersAsync(
         HttpClient http,
         IntegrationRun run,
         RunLogBuffer buffer,
         CancellationToken ct)
     {
         var sourceUrl = BuildCustomersUrl(run.Integration.SourceEndpoint.BaseUrl);
-        buffer.Info($"Fetching Customers from: {sourceUrl}");
+        buffer.Info($"Fetching customers from: {sourceUrl}");
 
-        var customers = await http.GetFromJsonAsync<List<OrderDto>>(sourceUrl, ct)
-                     ?? new List<OrderDto>();
+        using var request = new HttpRequestMessage(HttpMethod.Get, sourceUrl);
+        ApplyApiKeyHeader(request, run.Integration.SourceEndpoint);
 
-        buffer.Info($"Fetched {customers.Count} Customers");
+        using var response = await http.SendAsync(request, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+            buffer.Error($"Source returned {(int)response.StatusCode}: {errorBody}");
+            throw new InvalidOperationException($"Source returned {(int)response.StatusCode}");
+        }
+
+        var customers = await response.Content.ReadFromJsonAsync<List<SourceCustomerDto>>(cancellationToken: ct)
+                        ?? new List<SourceCustomerDto>();
+
+        buffer.Info($"Fetched {customers.Count} customers");
 
         return customers;
+    }
+
+    private static List<TargetCustomerDto> MapCustomers(List<SourceCustomerDto> sourceCustomers, RunLogBuffer buffer)
+    {
+        buffer.Info($"Mapping {sourceCustomers.Count} customers");
+
+        return sourceCustomers
+            .Select(customer => new TargetCustomerDto(
+                customer.CustomerId,
+                customer.Name,
+                customer.Email
+            ))
+            .ToList();
     }
 
     private static async Task SendCustomersAsync(
         HttpClient http,
         IntegrationRun run,
-        List<OrderDto> customers,
+        List<TargetCustomerDto> customers,
         RunLogBuffer buffer,
         CancellationToken ct)
     {
         var targetUrl = BuildCustomersUrl(run.Integration.TargetEndpoint.BaseUrl);
-        buffer.Info($"Sending Customers to: {targetUrl}");
+        buffer.Info($"Sending {customers.Count} customers to: {targetUrl}");
 
-        var response = await http.PostAsJsonAsync(targetUrl, customers, ct);
+        using var request = new HttpRequestMessage(HttpMethod.Post, targetUrl)
+        {
+            Content = JsonContent.Create(customers)
+        };
+
+        ApplyApiKeyHeader(request, run.Integration.TargetEndpoint);
+
+        using var response = await http.SendAsync(request, ct);
         var responseBody = await response.Content.ReadAsStringAsync(ct);
 
         if (!response.IsSuccessStatusCode)
@@ -67,5 +100,18 @@ public sealed class CustomersIntegrationProcessor : IIntegrationProcessor
         }
 
         buffer.Info($"Target OK: {responseBody}");
+    }
+
+    private static void ApplyApiKeyHeader(HttpRequestMessage request, SystemEndpoint endpoint)
+    {
+        var hasApiKey = !string.IsNullOrWhiteSpace(endpoint.ApiKey);
+        var hasHeaderName = !string.IsNullOrWhiteSpace(endpoint.ApiKeyHeaderName);
+
+        if (hasApiKey && hasHeaderName)
+        {
+            var headerName = endpoint.ApiKeyHeaderName!;
+            var apiKey = endpoint.ApiKey!;
+            request.Headers.TryAddWithoutValidation(headerName, apiKey);
+        }
     }
 }

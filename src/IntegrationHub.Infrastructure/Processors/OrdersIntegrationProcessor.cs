@@ -111,7 +111,9 @@ public sealed class OrdersIntegrationProcessor : IIntegrationProcessor
 
         if (hasApiKey && hasHeaderName)
         {
-            request.Headers.TryAddWithoutValidation(endpoint.ApiKeyHeaderName, endpoint.ApiKey);
+            var headerName = endpoint.ApiKeyHeaderName!;
+            var apiKey = endpoint.ApiKey!;
+            request.Headers.TryAddWithoutValidation(headerName, apiKey);
         }
     }
 }
