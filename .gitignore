@@ -46,3 +46,28 @@ Migrations/*.Designer.cs
 
 # Publish
 publish/
+
+# Visual Studio workspace and user cache files
+.vs/
+*.wsuo
+DocumentLayout.json
+DocumentLayout.backup.json
+VSWorkspaceState.json
+
+# Rider/IDE caches seen in screenshots (copilot/code chunks/semantic symbols)
+*CodeChunks.db*
+*SemanticSymbols.db*
+*CopilotIndices*
+
+# SQLite / DB cache files
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+*.dbcache.v2
+
+# DesignTime / evaluation caches
+DesignTimeBuild/
+*.metadata.v10.bin
+*.projects.v10.bin
+*.strings.v10.bin
