@@ -1,31 +1,72 @@
-﻿@model IntegrationHub.Web.Models.Runs.RunDetailsResponseDto
+@model IntegrationHub.Web.Models.Runs.RunDetailsResponseDto
 
 @{
     ViewData["Title"] = "Run Details";
 }
 
-<h2>Run Details</h2>
-
-<div class="card">
-    <div class="card-body">
-        <p><strong>Run Id:</strong> @Model.Id</p>
-        <p><strong>Integration Id:</strong> @Model.IntegrationId</p>
-        <p><strong>Status:</strong> <span id="run-status">@Model.Status</span></p>
-        <p><strong>Created At:</strong> <span id="run-createdAt">@Model.CreatedAt</span></p>
-        <p><strong>Started At:</strong> <span id="run-startedAt">@(Model.StartedAt?.ToString() ?? "-")</span></p>
-        <p><strong>Finished At:</strong> <span id="run-finishedAt">@(Model.FinishedAt?.ToString() ?? "-")</span></p>
-        <p><strong>Retry Count:</strong> <span id="run-retries">@Model.RetryCount / @Model.MaxRetries</span></p>
-        <p><strong>Next Retry At:</strong> <span id="run-nextRetryAt">@(Model.NextRetryAt?.ToString() ?? "-")</span></p>
-        <p><strong>Error:</strong> <span id="run-error">@(Model.ErrorMessage ?? "-")</span></p>
+<section class="page-header page-header--compact">
+    <div>
+        <span class="eyebrow">Run Monitor</span>
+        <h1>Run details</h1>
+        <p>Status, retries, and logs updated automatically.</p>
     </div>
-</div>
-<hr/>
-<h3>Logs</h3>
+</section>
 
+<section class="details-grid">
+    <article class="surface-card detail-card">
+        <div class="detail-list">
+            <div>
+                <span class="detail-list__label">Run ID</span>
+                <strong>@Model.Id</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Integration ID</span>
+                <strong>@Model.IntegrationId</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Status</span>
+                <strong id="run-status">@Model.Status</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Created At</span>
+                <strong id="run-createdAt">@Model.CreatedAt</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Started At</span>
+                <strong id="run-startedAt">@(Model.StartedAt?.ToString() ?? "-")</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Finished At</span>
+                <strong id="run-finishedAt">@(Model.FinishedAt?.ToString() ?? "-")</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Retry Count</span>
+                <strong id="run-retries">@Model.RetryCount / @Model.MaxRetries</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Next Retry At</span>
+                <strong id="run-nextRetryAt">@(Model.NextRetryAt?.ToString() ?? "-")</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Error</span>
+                <strong id="run-error">@(Model.ErrorMessage ?? "-")</strong>
+            </div>
+        </div>
+    </article>
 
-<pre id="run-logs" class="border rounded p-3 bg-dark text-light" style="min-height: 300px;">
-Loading logs... * 
-</pre>
+    <aside class="surface-card detail-card detail-card--accent">
+        <span class="eyebrow">Live Feed</span>
+        <h2>Execution logs</h2>
+        <p>The panel below updates through polling to reflect the current execution.</p>
+    </aside>
+</section>
+
+<section class="surface-card log-panel">
+    <h2>Logs</h2>
+    <pre id="run-logs" class="log-panel__console">
+Loading logs... *
+    </pre>
+</section>
 
 @section Scripts
 {

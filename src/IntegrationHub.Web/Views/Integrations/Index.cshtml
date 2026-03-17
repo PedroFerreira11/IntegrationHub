@@ -1,62 +1,75 @@
-﻿@model List<IntegrationHub.Web.Models.Integrations.IntegrationResponse>
+@model List<IntegrationHub.Web.Models.Integrations.IntegrationResponse>
 
 @{
     ViewData["Title"] = "Integrations";
 }
 
-<h2>Integrations</h2>
+<section class="page-header">
+    <div>
+        <span class="eyebrow">Operations</span>
+        <h1>Integrations</h1>
+        <p>Review, run, and remove integrations without losing context.</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Integrations" asp-action="Create">Create integration</a>
+</section>
 
 @if (TempData["ErrorMessage"] is string errorMessage)
 {
-    <div class="alert alert-danger">@errorMessage</div>
+    <div class="alert alert-danger soft-alert">@errorMessage</div>
 }
 
 @if (Model == null || !Model.Any())
 {
-    <p>No Integrations Found!</p>
+    <section class="empty-state">
+        <h2>No integrations found</h2>
+        <p>Create your first connection between endpoints to start operating from the dashboard.</p>
+    </section>
 }
 else
 {
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Id</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Source</th>
-            <th>Target</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        @foreach (var integration in Model)
-        {
-            <tr>
-                <td>@integration.Id</td>
-                <td>@integration.Name</td>
-                <td>@integration.Type</td>
-                <td>@integration.SourceEndpointName</td>
-                <td>@integration.TargetEndpointName</td>
-                <td>@integration.IsActive</td>
-                <td>
-                    <a asp-controller="Integrations"
-                       asp-action="Details"
-                       asp-route-id="@integration.Id">
-                        Details
-                    </a>
-                    <form asp-controller="Integrations"
-                          asp-action="Delete"
-                          asp-route-id="@integration.Id"
-                          method="post"
-                          style="display:inline;">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-link p-0">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </table>
+    <section class="surface-card table-surface">
+        <div class="table-responsive">
+            <table class="table app-table align-middle">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Route</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var integration in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@integration.Name</div>
+                            <div class="table-subtitle">@integration.Id</div>
+                        </td>
+                        <td><span class="pill-tag">@integration.Type</span></td>
+                        <td>
+                            <div class="fw-semibold">@integration.SourceEndpointName</div>
+                            <div class="table-subtitle">to @integration.TargetEndpointName</div>
+                        </td>
+                        <td>
+                            <span class="status-badge @(integration.IsActive ? "status-badge--success" : "status-badge--muted")">
+                                @(integration.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="action-group justify-content-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Integrations" asp-action="Details" asp-route-id="@integration.Id">Details</a>
+                                <form asp-controller="Integrations" asp-action="Delete" asp-route-id="@integration.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
 }
-<p>
-    <a class="btn btn-primary" asp-controller="Integrations" asp-action="Create">Create</a>
-</p>

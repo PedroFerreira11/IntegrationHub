@@ -1,48 +1,70 @@
-﻿@model IntegrationHub.Web.Models.Integrations.CreateIntegrationViewModel
+@model IntegrationHub.Web.Models.Integrations.CreateIntegrationViewModel
 
-<h2>Create Integration</h2>
+@{
+    ViewData["Title"] = "Create Integration";
+}
 
-<form asp-action="Create" method="post">
-    <div>
-        <label asp-for="Name"></label>
-        <input asp-for="Name" />
-        <span asp-validation-for="Name"></span>
+<section class="form-shell">
+    <div class="page-header page-header--compact">
+        <div>
+            <span class="eyebrow">Integrations</span>
+            <h1>Create integration</h1>
+            <p>Define the flow type and select the source and target endpoints.</p>
+        </div>
     </div>
 
-    <div>
-        <label asp-for="Type"></label>
-        <select asp-for="Type" asp-items="Html.GetEnumSelectList<IntegrationHub.Domain.Enums.IntegrationType>()"></select>
-        <span asp-validation-for="Type"></span>
-    </div>
+    <form asp-action="Create" method="post" class="surface-card app-form">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger soft-alert"></div>
 
-    <div>
-        <label asp-for="SourceEndpointId">Source Endpoint</label>
-        <select asp-for="SourceEndpointId">
-            <option value="">Select source endpoint</option>
-            @foreach (var endpoint in Model.Endpoints)
-            {
-                <option value="@endpoint.Id">@endpoint.Name</option>
-            }
-        </select>
-        <span asp-validation-for="SourceEndpointId"></span>
-    </div>
+        <div class="app-form__grid">
+            <div class="app-form__field">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
 
-    <div>
-        <label asp-for="TargetEndpointId">Target Endpoint</label>
-        <select asp-for="TargetEndpointId">
-            <option value="">Select target endpoint</option>
-            @foreach (var endpoint in Model.Endpoints)
-            {
-                <option value="@endpoint.Id">@endpoint.Name</option>
-            }
-        </select>
-        <span asp-validation-for="TargetEndpointId"></span>
-    </div>
+            <div class="app-form__field">
+                <label asp-for="Type" class="form-label"></label>
+                <select asp-for="Type" asp-items="Html.GetEnumSelectList<IntegrationHub.Domain.Enums.IntegrationType>()" class="form-select"></select>
+                <span asp-validation-for="Type" class="text-danger"></span>
+            </div>
 
-    <div>
-        <label asp-for="IsActive"></label>
-        <input asp-for="IsActive" type="checkbox" />
-    </div>
+            <div class="app-form__field">
+                <label asp-for="SourceEndpointId" class="form-label">Source Endpoint</label>
+                <select asp-for="SourceEndpointId" class="form-select">
+                    <option value="">Select source endpoint</option>
+                    @foreach (var endpoint in Model.Endpoints)
+                    {
+                        <option value="@endpoint.Id">@endpoint.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="SourceEndpointId" class="text-danger"></span>
+            </div>
 
-    <button type="submit">Create</button>
-</form>
+            <div class="app-form__field">
+                <label asp-for="TargetEndpointId" class="form-label">Target Endpoint</label>
+                <select asp-for="TargetEndpointId" class="form-select">
+                    <option value="">Select target endpoint</option>
+                    @foreach (var endpoint in Model.Endpoints)
+                    {
+                        <option value="@endpoint.Id">@endpoint.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="TargetEndpointId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <label class="toggle-field">
+            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+            <span>
+                <strong>Active integration</strong>
+                <small>It becomes available for execution as soon as it is created.</small>
+            </span>
+        </label>
+
+        <div class="action-group">
+            <button type="submit" class="btn btn-primary">Create integration</button>
+            <a asp-controller="Integrations" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</section>

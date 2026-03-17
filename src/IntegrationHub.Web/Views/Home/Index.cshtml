@@ -1,8 +1,52 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="hero-panel">
+    <div class="hero-panel__content">
+        <span class="eyebrow">Integration Control Center</span>
+        <h1>Orchestrate integrations with a clearer and more compelling interface.</h1>
+        <p class="hero-panel__lead">
+            Manage endpoints, connect services, and follow execution flows in a simple, modern operations dashboard.
+        </p>
+        <div class="hero-panel__actions">
+            <a class="btn btn-primary btn-lg" asp-controller="Integrations" asp-action="Index">View integrations</a>
+            <a class="btn btn-outline-light btn-lg" asp-controller="Endpoints" asp-action="Index">Explore endpoints</a>
+        </div>
+    </div>
+    <div class="hero-panel__stats">
+        <div class="metric-card">
+            <span class="metric-card__label">Flow</span>
+            <strong>Source -> Transform -> Target</strong>
+            <p>Build pipelines across systems without losing operational visibility.</p>
+        </div>
+        <div class="metric-card">
+            <span class="metric-card__label">Operations</span>
+            <strong>Real-time logs and status</strong>
+            <p>Track retries, failures, and execution progress from one place.</p>
+        </div>
+    </div>
+</section>
+
+<section class="dashboard-grid">
+    <article class="feature-card">
+        <span class="feature-card__kicker">Integrations</span>
+        <h2>Service connections with context</h2>
+        <p>Review source, target, integration type, and active state before running or deleting.</p>
+        <a asp-controller="Integrations" asp-action="Create" class="feature-card__link">Create integration</a>
+    </article>
+
+    <article class="feature-card">
+        <span class="feature-card__kicker">Endpoints</span>
+        <h2>A system catalog built to scale</h2>
+        <p>Register APIs, base URLs, and authentication without making the interface feel like a raw form.</p>
+        <a asp-controller="Endpoints" asp-action="Create" class="feature-card__link">New endpoint</a>
+    </article>
+
+    <article class="feature-card feature-card--accent">
+        <span class="feature-card__kicker">Runs</span>
+        <h2>Monitoring with immediate feedback</h2>
+        <p>Runs include status details, retries, and logs to make troubleshooting easier.</p>
+        <a asp-controller="Integrations" asp-action="Index" class="feature-card__link">Open operations area</a>
+    </article>
+</section>

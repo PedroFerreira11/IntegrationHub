@@ -1,34 +1,54 @@
-﻿@model IntegrationHub.Web.Models.Integrations.IntegrationResponse
+@model IntegrationHub.Web.Models.Integrations.IntegrationResponse
 
 @{
     ViewData["Title"] = "Details";
 }
 
-<h2>Integration Details</h2>
+<section class="page-header page-header--compact">
+    <div>
+        <span class="eyebrow">Integration</span>
+        <h1>@Model.Name</h1>
+        <p>Operational details for the configured connection between systems.</p>
+    </div>
+</section>
 
 @if (TempData["ErrorMessage"] is string errorMessage)
 {
-    <div class="alert alert-danger">@errorMessage</div>
+    <div class="alert alert-danger soft-alert">@errorMessage</div>
 }
 
-<p><strong>Name:</strong> @Model.Name</p>
-<p><strong>Type:</strong> @Model.Type</p>
-<p><strong>Source:</strong> @Model.SourceEndpointName</p>
-<p><strong>Target:</strong> @Model.TargetEndpointName</p>
-<p><strong>Active:</strong> @Model.IsActive</p>
+<section class="details-grid">
+    <article class="surface-card detail-card">
+        <div class="detail-list">
+            <div>
+                <span class="detail-list__label">Type</span>
+                <strong>@Model.Type</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Source</span>
+                <strong>@Model.SourceEndpointName</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Target</span>
+                <strong>@Model.TargetEndpointName</strong>
+            </div>
+            <div>
+                <span class="detail-list__label">Status</span>
+                <strong>@(Model.IsActive ? "Active" : "Inactive")</strong>
+            </div>
+        </div>
+    </article>
 
-<div class="d-flex gap-2">
-    <form asp-controller="Integrations"
-          asp-action="Run"
-          asp-route-id="@Model.Id"
-          method="post">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-primary">Run Integration</button>
-    </form>
-
-    <a asp-controller="Integrations"
-       asp-action="Index"
-       class="btn btn-outline-secondary">
-        Back
-    </a>
-</div>
+    <aside class="surface-card detail-card detail-card--accent">
+        <span class="eyebrow">Actions</span>
+        <h2>Run or go back</h2>
+        <p>Trigger an immediate integration run or return to the main list.</p>
+        <div class="action-group">
+            <form asp-controller="Integrations" asp-action="Run" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-primary">Run integration</button>
+            </form>
+            <a asp-controller="Integrations" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </aside>
+</section>

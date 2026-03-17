@@ -1,59 +1,70 @@
-﻿@model List<IntegrationHub.Web.Models.Endpoints.EndpointDto>
+@model List<IntegrationHub.Web.Models.Endpoints.EndpointDto>
 
 @{
     ViewData["Title"] = "Endpoints";
 }
 
-<h2>Endpoints</h2>
+<section class="page-header">
+    <div>
+        <span class="eyebrow">Registry</span>
+        <h1>Endpoints</h1>
+        <p>Manage external systems and keep the operational base ready for new integrations.</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Endpoints" asp-action="Create">Create endpoint</a>
+</section>
 
 @if (TempData["ErrorMessage"] is string errorMessage)
 {
-    <div class="alert alert-danger">@errorMessage</div>
+    <div class="alert alert-danger soft-alert">@errorMessage</div>
 }
 
 @if (Model == null || !Model.Any())
 {
-    <p>No Endpoints Found!!</p>
+    <section class="empty-state">
+        <h2>No endpoints found</h2>
+        <p>Register an endpoint to start building integrations across systems.</p>
+    </section>
 }
 else
 {
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Id</th>
-            <th>Name</th>
-            <th>BaseUrl</th>
-            <th>IsActive</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        @foreach (var endpoint in Model)
-        {
-            <tr>
-                <td>@endpoint.Id</td>
-                <td>@endpoint.Name</td>
-                <td>@endpoint.BaseUrl</td>
-                <td>@endpoint.IsActive</td>
-                <td>
-                    <a asp-controller="Endpoints"
-                       asp-action="Details"
-                       asp-route-id="@endpoint.Id">
-                        Details
-                    </a>
-                    <form asp-controller="Endpoints"
-                          asp-action="Delete"
-                          asp-route-id="@endpoint.Id"
-                          method="post"
-                          style="display:inline;">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-link p-0">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </table>
+    <section class="surface-card table-surface">
+        <div class="table-responsive">
+            <table class="table app-table align-middle">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Base URL</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var endpoint in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@endpoint.Name</div>
+                            <div class="table-subtitle">@endpoint.Id</div>
+                        </td>
+                        <td class="table-url">@endpoint.BaseUrl</td>
+                        <td>
+                            <span class="status-badge @(endpoint.IsActive ? "status-badge--success" : "status-badge--muted")">
+                                @(endpoint.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="action-group justify-content-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Endpoints" asp-action="Details" asp-route-id="@endpoint.Id">Details</a>
+                                <form asp-controller="Endpoints" asp-action="Delete" asp-route-id="@endpoint.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
 }
-<p>
-    <a class="btn btn-primary" asp-controller="Endpoints" asp-action="Create">Create</a>
-</p>
-

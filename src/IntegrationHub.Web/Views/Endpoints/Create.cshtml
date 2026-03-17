@@ -1,33 +1,55 @@
-﻿@model IntegrationHub.Web.Models.Endpoints.CreateEndpointDto
+@model IntegrationHub.Web.Models.Endpoints.CreateEndpointDto
 
-<h2>Create Endpoint</h2>
+@{
+    ViewData["Title"] = "Create Endpoint";
+}
 
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="All"></div>
-    <div>
-        <label asp-for="Name"></label>
-        <input asp-for="Name"/>
-        <span asp-validation-for="Name"></span>
-    </div>
-    <div>
-        <label asp-for="BaseUrl"></label>
-        <input asp-for="BaseUrl"/>
-        <span asp-validation-for="BaseUrl"></span>
-    </div>
-    <div>
-        <label asp-for="ApiKey"></label>
-        <input asp-for="ApiKey"/>
-        <span asp-validation-for="ApiKey"></span>
-    </div>
-    <div>
-        <label asp-for="ApiKeyHeaderName"></label>
-        <input asp-for="ApiKeyHeaderName"/>
-        <span asp-validation-for="ApiKeyHeaderName"></span>
-    </div>
-    <div>
-        <label asp-for="IsActive"></label>
-        <input asp-for="IsActive" type="checkbox"/>
+<section class="form-shell">
+    <div class="page-header page-header--compact">
+        <div>
+            <span class="eyebrow">Endpoints</span>
+            <h1>Create endpoint</h1>
+            <p>Register an external system with a base URL and authentication settings.</p>
+        </div>
     </div>
 
-    <button type="submit">Create</button>
-</form>
+    <form asp-action="Create" method="post" class="surface-card app-form">
+        <div asp-validation-summary="All" class="alert alert-danger soft-alert"></div>
+
+        <div class="app-form__grid">
+            <div class="app-form__field">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="app-form__field">
+                <label asp-for="BaseUrl" class="form-label"></label>
+                <input asp-for="BaseUrl" class="form-control" />
+                <span asp-validation-for="BaseUrl" class="text-danger"></span>
+            </div>
+            <div class="app-form__field">
+                <label asp-for="ApiKey" class="form-label"></label>
+                <input asp-for="ApiKey" class="form-control" />
+                <span asp-validation-for="ApiKey" class="text-danger"></span>
+            </div>
+            <div class="app-form__field">
+                <label asp-for="ApiKeyHeaderName" class="form-label"></label>
+                <input asp-for="ApiKeyHeaderName" class="form-control" />
+                <span asp-validation-for="ApiKeyHeaderName" class="text-danger"></span>
+            </div>
+        </div>
+
+        <label class="toggle-field">
+            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+            <span>
+                <strong>Active endpoint</strong>
+                <small>Makes the endpoint eligible for new integrations.</small>
+            </span>
+        </label>
+
+        <div class="action-group">
+            <button type="submit" class="btn btn-primary">Create endpoint</button>
+            <a asp-controller="Endpoints" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</section>
